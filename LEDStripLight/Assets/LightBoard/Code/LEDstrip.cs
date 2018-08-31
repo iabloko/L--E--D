@@ -52,7 +52,7 @@ public class LEDstrip : MonoBehaviour {
 	}
 
 	private void ResetSettiong_Materials () {
-		//Iron.material.color = Color.gray;
+		ArcMaterial.color = _Color[9];
 		_LightSet.color = Color.black;
 		_LightSet.SetColor ("_EmissionColor", Color.black);
 	}
@@ -197,7 +197,7 @@ public class LEDstrip : MonoBehaviour {
 				_VVertical[b]._VMesh[i].material.color = Color.red;
 				_VVertical[b]._VMesh[i].material.SetColor ("_EmissionColor", Color.red);
 				if (i == _VVertical[b]._VMesh.Length - 1) {
-					Material_Light_Off ();
+					Material_Light_On ();
 					yield return new WaitForSeconds (WFS * 1.2f);
 					StartCoroutine (Fliccering_mainEnd (b, WFS));
 				}
@@ -215,7 +215,7 @@ public class LEDstrip : MonoBehaviour {
 			_VVertical[_Check]._VMesh[i].material.color = Color.black;
 			_VVertical[_Check]._VMesh[i].material.SetColor ("_EmissionColor", Color.black);
 			if (i == _VVertical[_Check]._VMesh.Length - 1) {
-				Material_Light_On ();
+				Material_Light_Off ();
 				yield return new WaitForSeconds (WFS * 1.2f);
 				StartCoroutine (Fliccering_main (WFS));
 			}
@@ -253,6 +253,7 @@ public class LEDstrip : MonoBehaviour {
 			yield return Wfs_TimedeltaTime;
 		}
 	}
+
 	private IEnumerator SpeedChange () {
 		bool _Check = true, _Check2 = true;
 		yield return new WaitForSeconds (3f);
@@ -277,7 +278,7 @@ public class LEDstrip : MonoBehaviour {
 		int i = 0, b = 0;
 		_Color[0] = Color.black;
 		_Color[1] = Color.black;
-		Iron.material.color = Color.black;
+		Material_Light_Off();
 		StopAllCoroutines ();
 		for (b = 0; b < _VVertical.Count; b++) {
 			for (i = 0; i < _VVertical[b]._VMesh.Length; i++) {
@@ -301,7 +302,6 @@ public class LEDstrip : MonoBehaviour {
 	#region ArcEffect
 	private IEnumerator ArcEffect (bool isInversive) {
 		int i = 0, b = 0;
-		Material_Light_Off();
 		yield return new WaitForSeconds (0.75f);
 		if (!isInversive) {
 			for (b = 0; b < HHhorizontalCount; b++) {
