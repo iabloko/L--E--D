@@ -278,7 +278,7 @@ public class LEDstrip : MonoBehaviour {
 		int i = 0, b = 0;
 		_Color[0] = Color.black;
 		_Color[1] = Color.black;
-		Material_Light_Off();
+		Material_Light_Off ();
 		StopAllCoroutines ();
 		for (b = 0; b < _VVertical.Count; b++) {
 			for (i = 0; i < _VVertical[b]._VMesh.Length; i++) {
@@ -359,14 +359,14 @@ public class LEDstrip : MonoBehaviour {
 		int i = 0, b = 0;
 		for (b = 0; b < HHhorizontalCount; b++) {
 			for (i = 0; i < _HHorizontal[b]._HMesh.Length; i++) {
-				if ((i+b) % 5 < 1) {
+				if ((i + b) % 5 < 1) {
 					_HHorizontal[b]._HMesh[i].material = _LightSet;
 				}
 			}
 		}
 		for (b = 0; b < HHhorizontalCount; b++) {
 			for (i = 0; i < _HHorizontal[b]._HMesh.Length; i++) {
-				if ((i+b) % 5 < 1) {
+				if ((i + b) % 5 < 1) {
 					_VVertical[b]._VMesh[i].material = _LightSet;
 				}
 			}
@@ -387,12 +387,36 @@ public class LEDstrip : MonoBehaviour {
 		}
 	}
 
+	private IEnumerator ColorChangeMain (int i, Color _color1, Color _color2, Material _Material) {
+		_Color[0] = _Color[8];
+		Debug.Log ("ColorChangeMain");
+		while (_color1 != _color2) {
+			_Color[0] = Color.Lerp (_color1, _color2, Time.deltaTime);
+			_Material.color = _Color[0];
+			_Material.SetColor ("_EmissionColor", _Color[0]);
+			yield return Wfs_TimedeltaTime;
+			yield return Wfs_TimedeltaTime;
+		}
+	}
+
 	#endregion
 }
 
-/*
+/*	#region ColorChange and SpeedChange
+	private IEnumerator ColorChange (Color color_2, Color color_3) {
+		_Color[0] = Color.black;
+		_Color[1] = Color.black;
+		Debug.Log ("ColorChange");
+		yield return new WaitForSeconds (1f);
+		while (_Color[1] != _Color[3]) {
+			_Color[0] = Color.Lerp (_Color[0], color_2, Time.deltaTime);
+			_Color[1] = Color.Lerp (_Color[1], color_3, Time.deltaTime);
+			yield return Wfs_TimedeltaTime;
+		}
+	}
+ */
 
-	#region HorizontalEffect
+/*	#region HorizontalEffect
 	private IEnumerator horizontalEffect () {
 		int b = Random.Range (0, _HHorizontal.Count), i = 0; //_HHorizontal.Count
 		for (i = 0; i <= _HHorizontal[b]._HMesh.Length - 1; i++) {
