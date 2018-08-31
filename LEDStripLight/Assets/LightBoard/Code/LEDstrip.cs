@@ -27,12 +27,14 @@ public class LEDstrip : MonoBehaviour {
 	[SerializeField] private List<HHorizontal> _HHorizontal;
 	[SerializeField] private List<VVertical> _VVertical;
 	[SerializeField] private Color[] _Color;
-	[SerializeField] private Material _LightOn, _LightOff;
+	[SerializeField] private Material _LightOn, _LightOff, _LightSet, ArcMaterial;
 	[Range (0.001f, 0.1f)]
 	[SerializeField] private float Speed = 0.06f;
-	[SerializeField] private AnimationCurve SpeedCurve;
 	[SerializeField] private MeshRenderer Iron;
-	private float MathSin = 0;
+
+	[SerializeField] private Light Light_1;
+	[SerializeField] private Light Light_2;
+	[SerializeField] private Light Light_3;
 	//[Range (0.01f, 5)]
 	//[SerializeField] private float frequency = 0.1f;
 
@@ -40,12 +42,19 @@ public class LEDstrip : MonoBehaviour {
 	private int HHhorizontalCount = 0;
 
 	void Awake () {
-		Iron.material.color = Color.gray;
 		HHhorizontalCount = _HHorizontal.Count;
-		_WaitForSeconds = new WaitForSeconds (Speed);
+		_WaitForSeconds = new WaitForSeconds (0.035f);
 		_WaitForSeconds2 = new WaitForSeconds (0.05f);
 		Wfs_TimedeltaTime = new WaitForSeconds (Time.deltaTime);
 		WfS_SpeedChange = new WaitForSeconds (0.05f);
+
+		ResetSettiong_Materials ();
+	}
+
+	private void ResetSettiong_Materials () {
+		//Iron.material.color = Color.gray;
+		_LightSet.color = Color.black;
+		_LightSet.SetColor ("_EmissionColor", Color.black);
 	}
 
 	void Update () {
@@ -183,12 +192,12 @@ public class LEDstrip : MonoBehaviour {
 	private IEnumerator Fliccering_main (float WFS) {
 		int i = 0, b = Random.Range (0, _VVertical.Count);
 		if (b == 0 || b == 2 || b == 4 || b == 7 || b == 9 || b == 11) {
-			//yield return new WaitForSeconds (MathSin);
 			for (i = 0; i < _VVertical[b]._VMesh.Length; i++) {
 				_VVertical[b]._VMesh[i].material = _LightOn;
-				_VVertical[b]._VMesh[i].material.color = _Color[5];
-				_VVertical[b]._VMesh[i].material.SetColor ("_EmissionColor", _Color[5]);
+				_VVertical[b]._VMesh[i].material.color = Color.red;
+				_VVertical[b]._VMesh[i].material.SetColor ("_EmissionColor", Color.red);
 				if (i == _VVertical[b]._VMesh.Length - 1) {
+					Material_Light_Off ();
 					yield return new WaitForSeconds (WFS * 1.2f);
 					StartCoroutine (Fliccering_mainEnd (b, WFS));
 				}
@@ -201,18 +210,36 @@ public class LEDstrip : MonoBehaviour {
 	}
 	private IEnumerator Fliccering_mainEnd (int _Check, float WFS) {
 		int i = 0;
-		//yield return new WaitForSeconds (MathSin);
 		for (i = 0; i < _VVertical[_Check]._VMesh.Length; i++) {
 			_VVertical[_Check]._VMesh[i].material = _LightOff;
 			_VVertical[_Check]._VMesh[i].material.color = Color.black;
 			_VVertical[_Check]._VMesh[i].material.SetColor ("_EmissionColor", Color.black);
 			if (i == _VVertical[_Check]._VMesh.Length - 1) {
+				Material_Light_On ();
 				yield return new WaitForSeconds (WFS * 1.2f);
 				StartCoroutine (Fliccering_main (WFS));
 			}
 		}
 	}
 	#endregion
+
+	private void Material_Light_Off () {
+		ArcMaterial.color = _Color[8];
+		Iron.material.color = _Color[8];
+		Light_1.enabled = false;
+		Light_2.enabled = false;
+		Light_3.enabled = false;
+	}
+	private void Material_Light_On () {
+		ArcMaterial.color = _Color[7];
+		Iron.material.color = _Color[7];
+		Light_1.enabled = true;
+		Light_1.color = _Color[5];
+		Light_2.enabled = true;
+		Light_2.color = _Color[5];
+		Light_3.enabled = true;
+		Light_3.color = _Color[5];
+	}
 
 	#region ColorChange and SpeedChange
 	private IEnumerator ColorChange (Color color_2, Color color_3) {
@@ -224,7 +251,6 @@ public class LEDstrip : MonoBehaviour {
 			_Color[0] = Color.Lerp (_Color[0], color_2, Time.deltaTime);
 			_Color[1] = Color.Lerp (_Color[1], color_3, Time.deltaTime);
 			yield return Wfs_TimedeltaTime;
-
 		}
 	}
 	private IEnumerator SpeedChange () {
@@ -233,7 +259,7 @@ public class LEDstrip : MonoBehaviour {
 		while (Speed != 0.001f) {
 			Speed = Mathf.Lerp (Speed, 0.001f, Time.deltaTime * 1.25f);
 
-			if (_Check == true && Speed <= 0.02f) {
+			if (_Check == true && Speed <= 0.015f) {
 				_Check = false;
 				StartCoroutine ("FlicceringPhase_1");
 			}
@@ -263,6 +289,10 @@ public class LEDstrip : MonoBehaviour {
 				_HHorizontal[b]._HMesh[i].material = _LightOff;
 			}
 		}
+		Iron.material.color = _Color[8];
+		Light_1.enabled = false;
+		Light_2.enabled = false;
+		Light_3.enabled = false;
 		StartCoroutine (ArcEffect (MainBool));
 		yield return null;
 	}
@@ -271,16 +301,22 @@ public class LEDstrip : MonoBehaviour {
 	#region ArcEffect
 	private IEnumerator ArcEffect (bool isInversive) {
 		int i = 0, b = 0;
+		Material_Light_Off();
+		yield return new WaitForSeconds (0.75f);
 		if (!isInversive) {
 			for (b = 0; b < HHhorizontalCount; b++) {
 				for (i = 0; i < _HHorizontal[b]._HMesh.Length; i++) {
+					//Debug.Log ("ArcEffect_Count" + " = " + ArcEffect_Count);
 					_HHorizontal[b]._HMesh[i].material = _LightOn;
-					_HHorizontal[b]._HMesh[i].material.color = Color.white;
+					_HHorizontal[b]._HMesh[i].material.color = _Color[2];
+					_HHorizontal[b]._HMesh[i].material.SetColor ("_EmissionColor", _Color[2]);
+
 				}
 				if (b == 3) {
 					StartCoroutine (ArcEffectOff (MainBool));
 				}
-				yield return Wfs_TimedeltaTime;
+
+				yield return _WaitForSeconds;
 			}
 		} else if (isInversive) {
 			for (b = HHhorizontalCount - 1; b > 0; b--) {
@@ -291,10 +327,11 @@ public class LEDstrip : MonoBehaviour {
 				if (b == 2) {
 					StartCoroutine (ArcEffectOff (MainBool));
 				}
-				yield return Wfs_TimedeltaTime;
+				yield return _WaitForSeconds;
 			}
 		}
 	}
+
 	private IEnumerator ArcEffectOff (bool isInversive) {
 		int i = 0, b = 0;
 		if (!isInversive) {
@@ -302,10 +339,9 @@ public class LEDstrip : MonoBehaviour {
 				for (i = 0; i < _HHorizontal[b]._HMesh.Length; i++) {
 					_HHorizontal[b]._HMesh[i].material = _LightOff;
 					_HHorizontal[b]._HMesh[i].material.color = Color.black;
-					if (b == _HHorizontal.Count - 1 && i == _HHorizontal[b]._HMesh.Length - 1) {
-					}
+					_HHorizontal[b]._HMesh[i].material.SetColor ("_EmissionColor", Color.black);
 				}
-				yield return Wfs_TimedeltaTime;
+				yield return _WaitForSeconds;
 			}
 
 		} else if (isInversive) {
@@ -314,10 +350,43 @@ public class LEDstrip : MonoBehaviour {
 					_HHorizontal[b]._HMesh[i].material = _LightOff;
 					_HHorizontal[b]._HMesh[i].material.color = Color.black;
 				}
-				yield return Wfs_TimedeltaTime;
+				yield return _WaitForSeconds;
 			}
 		}
+		StartCoroutine ("_SetMaterial");
 	}
+	private IEnumerator _SetMaterial () {
+		int i = 0, b = 0;
+		for (b = 0; b < HHhorizontalCount; b++) {
+			for (i = 0; i < _HHorizontal[b]._HMesh.Length; i++) {
+				if ((i+b) % 5 < 1) {
+					_HHorizontal[b]._HMesh[i].material = _LightSet;
+				}
+			}
+		}
+		for (b = 0; b < HHhorizontalCount; b++) {
+			for (i = 0; i < _HHorizontal[b]._HMesh.Length; i++) {
+				if ((i+b) % 5 < 1) {
+					_VVertical[b]._VMesh[i].material = _LightSet;
+				}
+			}
+		}
+
+		StartCoroutine ("ColorChange_2");
+		yield return null;
+	}
+	private IEnumerator ColorChange_2 () {
+		Debug.Log ("ColorChange_2");
+		_LightSet.color = _Color[0];
+		yield return new WaitForSeconds (1f);
+		while (_Color[0] != _Color[2]) {
+			_Color[0] = Color.Lerp (_Color[0], _Color[2], Time.deltaTime);
+			_LightSet.color = _Color[0];
+			_LightSet.SetColor ("_EmissionColor", _Color[0]);
+			yield return Wfs_TimedeltaTime;
+		}
+	}
+
 	#endregion
 }
 
