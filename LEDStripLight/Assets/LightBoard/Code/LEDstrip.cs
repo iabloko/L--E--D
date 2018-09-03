@@ -40,6 +40,7 @@ public class LEDstrip : MonoBehaviour {
 
 	private WaitForSeconds _WaitForSeconds, _WaitForSeconds2, WfS_SpeedChange, Wfs_TimedeltaTime;
 	private int HHhorizontalCount = 0;
+	private int ArcEffectCounter = 0;
 
 	void Awake () {
 		HHhorizontalCount = _HHorizontal.Count;
@@ -65,10 +66,10 @@ public class LEDstrip : MonoBehaviour {
 			//StartCoroutine (horizontalEffect ());
 			//StartCoroutine ("horizontalAll");
 			//StartCoroutine ("VerticalEffect");
-			//StartCoroutine (ArcEffect (MainBool));
+			//StartCoroutine (ArcEffect (MainBool, _Color[2]));
 			//StartCoroutine ("FlicceringPhase_1");
-			//StartCoroutine ("StarEffect");
 			//StartCoroutine ("SpeedChange");
+			//StartCoroutine ("TheCometEffect");
 		}
 	}
 	#region StripLengthAnimation
@@ -150,7 +151,7 @@ public class LEDstrip : MonoBehaviour {
 	#endregion
 
 	#region Fliccering
-	private IEnumerator FlicceringPhase_1 () {
+	private IEnumerator FlicceringPhase_1 () { //Волна с первой до послденей
 		int i = 0, b = 0;
 		for (b = 0; b < _VVertical.Count; b++) {
 			Color CColor = _Color[Random.Range (0, _Color.Length)];
@@ -165,7 +166,7 @@ public class LEDstrip : MonoBehaviour {
 			yield return _WaitForSeconds2;
 		}
 	}
-	private IEnumerator FlicceringPhase_1_end () {
+	private IEnumerator FlicceringPhase_1_end () { //Волна с первой до послденей
 		int i = 0, b = 0;
 		for (b = 0; b < _VVertical.Count; b++) {
 			for (i = 0; i < _VVertical[b]._VMesh.Length; i++) {
@@ -189,7 +190,7 @@ public class LEDstrip : MonoBehaviour {
 		}
 	}
 
-	private IEnumerator Fliccering_main (float WFS) {
+	private IEnumerator Fliccering_main (float WFS) { //Включаем псевдо рандомный LED_Strip
 		int i = 0, b = Random.Range (0, _VVertical.Count);
 		if (b == 0 || b == 2 || b == 4 || b == 7 || b == 9 || b == 11) {
 			for (i = 0; i < _VVertical[b]._VMesh.Length; i++) {
@@ -208,7 +209,7 @@ public class LEDstrip : MonoBehaviour {
 		}
 
 	}
-	private IEnumerator Fliccering_mainEnd (int _Check, float WFS) {
+	private IEnumerator Fliccering_mainEnd (int _Check, float WFS) { //Выключаем псевдо рандомный LED_Strip
 		int i = 0;
 		for (i = 0; i < _VVertical[_Check]._VMesh.Length; i++) {
 			_VVertical[_Check]._VMesh[i].material = _LightOff;
@@ -245,7 +246,6 @@ public class LEDstrip : MonoBehaviour {
 	private IEnumerator ColorChange (Color color_2, Color color_3) {
 		_Color[0] = Color.black;
 		_Color[1] = Color.black;
-		Debug.Log ("ColorChange");
 		yield return new WaitForSeconds (1f);
 		while (_Color[1] != _Color[3]) {
 			_Color[0] = Color.Lerp (_Color[0], color_2, Time.deltaTime);
@@ -290,32 +290,26 @@ public class LEDstrip : MonoBehaviour {
 				_HHorizontal[b]._HMesh[i].material = _LightOff;
 			}
 		}
-		Iron.material.color = _Color[8];
-		Light_1.enabled = false;
-		Light_2.enabled = false;
-		Light_3.enabled = false;
-		StartCoroutine (ArcEffect (MainBool));
+		Material_Light_Off ();
+		StartCoroutine (ArcEffect (MainBool, _Color[10]));
 		yield return null;
 	}
 	#endregion
 
 	#region ArcEffect
-	private IEnumerator ArcEffect (bool isInversive) {
+	private IEnumerator ArcEffect (bool isInversive, Color _Color) {
 		int i = 0, b = 0;
-		yield return new WaitForSeconds (0.75f);
+		yield return new WaitForSeconds (1f);
 		if (!isInversive) {
 			for (b = 0; b < HHhorizontalCount; b++) {
 				for (i = 0; i < _HHorizontal[b]._HMesh.Length; i++) {
-					//Debug.Log ("ArcEffect_Count" + " = " + ArcEffect_Count);
 					_HHorizontal[b]._HMesh[i].material = _LightOn;
-					_HHorizontal[b]._HMesh[i].material.color = _Color[2];
-					_HHorizontal[b]._HMesh[i].material.SetColor ("_EmissionColor", _Color[2]);
-
+					_HHorizontal[b]._HMesh[i].material.color = _Color;
+					_HHorizontal[b]._HMesh[i].material.SetColor ("_EmissionColor", _Color);
 				}
-				if (b == 3) {
+				if (b == 3 + ArcEffectCounter) {
 					StartCoroutine (ArcEffectOff (MainBool));
 				}
-
 				yield return _WaitForSeconds;
 			}
 		} else if (isInversive) {
@@ -340,10 +334,17 @@ public class LEDstrip : MonoBehaviour {
 					_HHorizontal[b]._HMesh[i].material = _LightOff;
 					_HHorizontal[b]._HMesh[i].material.color = Color.black;
 					_HHorizontal[b]._HMesh[i].material.SetColor ("_EmissionColor", Color.black);
+					if (b == HHhorizontalCount - 1 && i == _HHorizontal[b]._HMesh.Length - 1 && ArcEffectCounter < 2) {
+						ArcEffectCounter++;
+						yield return new WaitForSeconds ((0.5f + ArcEffectCounter) / 2);
+						StartCoroutine (ArcEffect (false, _Color[10 + ArcEffectCounter]));
+					} else if (b == HHhorizontalCount - 1 && i == _HHorizontal[b]._HMesh.Length - 1 && ArcEffectCounter == 2) {
+						Debug.Log ("ArcEffectCounter==2");
+						StartCoroutine ("_SetMaterial");
+					}
 				}
 				yield return _WaitForSeconds;
 			}
-
 		} else if (isInversive) {
 			for (b = HHhorizontalCount - 1; b > 0; b--) {
 				for (i = _HHorizontal[b]._HMesh.Length - 1; i > 0; i--) {
@@ -353,7 +354,6 @@ public class LEDstrip : MonoBehaviour {
 				yield return _WaitForSeconds;
 			}
 		}
-		StartCoroutine ("_SetMaterial");
 	}
 	private IEnumerator _SetMaterial () {
 		int i = 0, b = 0;
@@ -361,44 +361,65 @@ public class LEDstrip : MonoBehaviour {
 			for (i = 0; i < _HHorizontal[b]._HMesh.Length; i++) {
 				if ((i + b) % 5 < 1) {
 					_HHorizontal[b]._HMesh[i].material = _LightSet;
+					StartCoroutine (Color_3(b,i));
 				}
 			}
 		}
-		for (b = 0; b < HHhorizontalCount; b++) {
-			for (i = 0; i < _HHorizontal[b]._HMesh.Length; i++) {
+		for (b = 0; b < _VVertical.Count; b++) {
+			for (i = 0; i < _VVertical[b]._VMesh.Length; i++) {
 				if ((i + b) % 5 < 1) {
 					_VVertical[b]._VMesh[i].material = _LightSet;
 				}
 			}
 		}
-
 		StartCoroutine ("ColorChange_2");
 		yield return null;
 	}
+
 	private IEnumerator ColorChange_2 () {
-		Debug.Log ("ColorChange_2");
+		Debug.Log ("test");
 		_LightSet.color = _Color[0];
+		_LightSet.SetColor ("_EmissionColor", _Color[0]);
 		yield return new WaitForSeconds (1f);
 		while (_Color[0] != _Color[2]) {
-			_Color[0] = Color.Lerp (_Color[0], _Color[2], Time.deltaTime);
+			_Color[0] = Color.Lerp (_Color[0], _Color[2], Time.deltaTime * 5);
 			_LightSet.color = _Color[0];
 			_LightSet.SetColor ("_EmissionColor", _Color[0]);
 			yield return Wfs_TimedeltaTime;
 		}
+		StartCoroutine ("TheCometEffect");
 	}
-
-	private IEnumerator ColorChangeMain (int i, Color _color1, Color _color2, Material _Material) {
-		_Color[0] = _Color[8];
-		Debug.Log ("ColorChangeMain");
-		while (_color1 != _color2) {
-			_Color[0] = Color.Lerp (_color1, _color2, Time.deltaTime);
-			_Material.color = _Color[0];
-			_Material.SetColor ("_EmissionColor", _Color[0]);
-			yield return Wfs_TimedeltaTime;
+	private IEnumerator Color_3 (int _b, int _i) {
+		bool AnimPlay = true;
+		while (AnimPlay) {
+			_HHorizontal[_b]._HMesh[_i].material.color = Color.Lerp (_Color[8], _Color[12], Mathf.PingPong (Time.time, 2));
+			_HHorizontal[_b]._HMesh[_i].material.SetColor ("_EmissionColor", _HHorizontal[_b]._HMesh[_i].material.color);
 			yield return Wfs_TimedeltaTime;
 		}
 	}
+	#endregion
 
+	#region TheCometEffect
+	private IEnumerator TheCometEffect () {
+		int b = Random.Range (0, _VVertical.Count), i = _VVertical[b]._VMesh.Length - 1;
+		for (i = _VVertical[b]._VMesh.Length - 1; i > 0; i--) {
+			_VVertical[b]._VMesh[i].material = _LightOn;
+			if (i == (_VVertical[b]._VMesh.Length - 7)) {
+				StartCoroutine (TheCometEffect_Off (b));
+			}
+			yield return Wfs_TimedeltaTime;
+		}
+	}
+	private IEnumerator TheCometEffect_Off (int _b) {
+		int i = _VVertical[_b]._VMesh.Length - 1;
+		for (i = _VVertical[_b]._VMesh.Length - 1; i > 0; i--) {
+			_VVertical[_b]._VMesh[i].material = _LightOff;
+			if (i == (_VVertical[_b]._VMesh.Length - 7)) { //Длинна пустого пространства
+				StartCoroutine ("TheCometEffect");
+			}
+			yield return Wfs_TimedeltaTime;
+		}
+	}
 	#endregion
 }
 
@@ -414,6 +435,13 @@ public class LEDstrip : MonoBehaviour {
 			yield return Wfs_TimedeltaTime;
 		}
 	}
+	for (i = 0; i < _HHorizontal[b]._HMesh.Length; i++) {
+						_HHorizontal[b]._HMesh[i].material = _LightOn;
+						_HHorizontal[b]._HMesh[i].material.color = _Color[0];
+						_HHorizontal[b]._HMesh[i].material.SetColor ("_EmissionColor", _Color[0]);
+						if (i == StripLength) {
+							StartCoroutine (StripLengthAnimationOff (b, _inversive));
+						}
  */
 
 /*	#region HorizontalEffect
